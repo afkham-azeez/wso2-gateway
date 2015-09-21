@@ -30,6 +30,8 @@ import org.wso2.carbon.gateway.internal.transport.common.HTTPContentChunk;
 import org.wso2.carbon.gateway.internal.transport.common.PipeImpl;
 import org.wso2.carbon.gateway.internal.transport.common.Util;
 import org.wso2.carbon.gateway.internal.transport.common.disruptor.publisher.CarbonEventPublisher;
+import org.wso2.carbon.gateway.internal.transport.sender.channel.TargetChannel;
+import org.wso2.carbon.gateway.internal.transport.sender.channel.pool.ConnectionManager;
 
 import java.net.InetSocketAddress;
 
@@ -43,12 +45,9 @@ public class TargetHandler extends ChannelInboundHandlerAdapter {
     private RingBuffer ringBuffer;
     private CarbonMessage cMsg;
     private int queuesize;
+    private ConnectionManager connectionManager;
+    private TargetChannel targetChannel;
 
-
-    public TargetHandler(RingBuffer ringBuffer, int queuesize) {
-        this.ringBuffer = ringBuffer;
-        this.queuesize = queuesize;
-    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -80,6 +79,7 @@ public class TargetHandler extends ChannelInboundHandlerAdapter {
                 if (msg instanceof LastHttpContent) {
                     LastHttpContent lastHttpContent = (LastHttpContent) msg;
                     chunk = new HTTPContentChunk(lastHttpContent);
+                    connectionManager.returnChannel(targetChannel);
                 } else {
                     DefaultHttpContent httpContent = (DefaultHttpContent) msg;
                     chunk = new HTTPContentChunk(httpContent);
@@ -98,4 +98,19 @@ public class TargetHandler extends ChannelInboundHandlerAdapter {
         this.callback = callback;
     }
 
+    public void setRingBuffer(RingBuffer ringBuffer) {
+        this.ringBuffer = ringBuffer;
+    }
+
+    public void setQueuesize(int queuesize) {
+        this.queuesize = queuesize;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
+
+    public void setTargetChannel(TargetChannel targetChannel) {
+        this.targetChannel = targetChannel;
+    }
 }
